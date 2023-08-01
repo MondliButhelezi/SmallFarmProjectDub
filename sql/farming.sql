@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS reading_unit (
    id SERIAL NOT NULL PRIMARY KEY,
    uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
    last_update TIMESTAMP DEFAULT now() NOT NULL,
-   last_update_by TEXT NOT NULL,
+   last_update_by TEXT,
    name TEXT NOT NULL,
    abbreviation TEXT NOT NULL
 );
@@ -21,6 +21,23 @@ COMMENT ON COLUMN reading_unit.last_update_by IS 'The name of the person who upd
 COMMENT ON COLUMN reading_unit.name IS 'Where we make comments and a description about the reading_unit.';
 COMMENT ON COLUMN reading_unit.abbreviation IS 'Where we make comments and a description about the reading_unit.';
 
+-- MANUFACTURER
+CREATE TABLE IF NOT EXISTS manufacturer (
+   id SERIAL NOT NULL PRIMARY KEY,
+   uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
+   last_update TIMESTAMP DEFAULT now() NOT NULL,
+   last_update_by TEXT NOT NULL,
+   name TEXT NOT NULL,
+   url TEXT
+);
+
+COMMENT ON TABLE manufacturer IS 'Look up table for monitoring station reading unit';
+COMMENT ON COLUMN manufacturer.id IS 'The equipment type ID. This is the Primary Key.';
+COMMENT ON COLUMN manufacturer.uuid IS 'Global Unique Identifier.';
+COMMENT ON COLUMN manufacturer.last_update IS 'The date that the last update was made (yyyy-mm-dd hh:mm:ss).';
+COMMENT ON COLUMN manufacturer.last_update_by IS 'The name of the person who last updated the table.';
+COMMENT ON COLUMN manufacturer.name IS 'Where we make comments and a description about the reading_unit.';
+COMMENT ON COLUMN manufacturer.url IS 'The URL is unique to the manufacturer.';
 
 -- EQUIPMENT TYPE
 CREATE TABLE IF NOT EXISTS equipment_type (
@@ -29,11 +46,8 @@ CREATE TABLE IF NOT EXISTS equipment_type (
    last_update TIMESTAMP DEFAULT now() NOT NULL,
    last_update_by TEXT NOT NULL,
    name TEXT NOT NULL,
-   url TEXT,
    notes TEXT,
-   model TEXT,
-   manufacturer TEXT,
-   calibration_date TIMESTAMP DEFAULT NOW() NOT NULL
+   manufacturer_uuid UUID NOT NULL REFERENCES manufacturer(uuid)
 );
 
 COMMENT ON TABLE equipment_type IS 'Look up table for equipment type, e.g. moisture tester, penetrometers.';
@@ -42,12 +56,8 @@ COMMENT ON COLUMN equipment_type.uuid IS 'Global Unique Identifier.';
 COMMENT ON COLUMN equipment_type.last_update IS 'The date that the last update was made (yyyy-mm-dd hh:mm:ss).';
 COMMENT ON COLUMN equipment_type.last_update_by IS 'The name of the person who updated the table last.';
 COMMENT ON COLUMN equipment_type.name IS 'Where we make comments and a description about the equipment type.';
-COMMENT ON COLUMN equipment_type.url IS 'The URL is unique to the equipment type.';
 COMMENT ON COLUMN equipment_type.notes IS 'Additional information of the equipment type';
-COMMENT ON COLUMN equipment_type.model IS 'Where we make comments and a description about the equipment type.';
-COMMENT ON COLUMN equipment_type.manufacturer IS 'Information about the manufacturer that manufactured the equipment.';
-COMMENT ON COLUMN equipment_type.calibration_date IS 'The last date the equipment was calibrated.';
-
+COMMENT ON COLUMN equipment_type.manufacturer_uuid IS 'Globally Unique Identifier.';
 
 -- ASSOCIATION TABLE
 -- MONITORING STATION
@@ -58,7 +68,7 @@ CREATE TABLE IF NOT EXISTS monitoring_station (
    last_update_by TEXT NOT NULL,
    name TEXT NOT NULL,
    image TEXT,
-   equipment TEXT NOT NULL,
+   model TEXT,
    geometry GEOMETRY (POINT, 4326) NOT NULL,
    equipment_type_uuid UUID NOT NULL REFERENCES equipment_type(uuid)
 );
@@ -70,39 +80,32 @@ COMMENT ON COLUMN monitoring_station.last_update IS 'The date that the last upda
 COMMENT ON COLUMN monitoring_station.last_update_by IS 'The name of the person who updated the table last.';
 COMMENT ON COLUMN monitoring_station.name IS 'Where we make comments and a description about the equipment name.';
 COMMENT ON COLUMN monitoring_station.image IS 'The image link associated with the monitoring station image.';
+COMMENT ON COLUMN monitoring_station.model IS 'Where we make comments and a description about the equipment type.';
 COMMENT ON COLUMN monitoring_station.geometry IS 'The location of the monitoring station. Follows EPSG: 4326.';
 COMMENT ON COLUMN monitoring_station.equipment_type_uuid IS 'Globally Unique Identifier.';
 
 -- ASSOCIATION TABLE
--- READINGS
-CREATE TABLE IF NOT EXISTS readings (
+-- READING
+CREATE TABLE IF NOT EXISTS reading (
    id SERIAL NOT NULL PRIMARY KEY,
    uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
    last_update TIMESTAMP DEFAULT now() NOT NULL,
-   last_update_by TEXT NOT NULL,
-   name TEXT NOT NULL,
+   last_update_by TEXT,
+   reading_value FLOAT NOT NULL,
    notes TEXT,
-   equipment TEXT NOT NULL,
-   geometry GEOMETRY (POINT, 4326) NOT NULL,
-   soil_ph FLOAT NOT NULL,
-   soil_temperature FLOAT NOT NULL,
-   estimated_depth_m FLOAT NOT NULL,
    monitoring_station_uuid UUID NOT NULL REFERENCES monitoring_station(uuid),
    reading_unit_uuid UUID NOT NULL REFERENCES reading_unit(uuid)
 );
 
-COMMENT ON TABLE readings IS 'Look up table for readings, e.g. reading at station 1, station 2.';
-COMMENT ON COLUMN readings.id IS 'The monitoring station ID. This is the Primary Key.';
-COMMENT ON COLUMN readings.uuid IS 'Global Unique Identifier.';
-COMMENT ON COLUMN readings.last_update IS 'The date that the last update was made (yyyy-mm-dd hh:mm:ss).';
-COMMENT ON COLUMN readings.last_update_by IS 'The name of the person who updated the table last.';
-COMMENT ON COLUMN readings.name IS 'Where we make comments and a description about the readings name.';
-COMMENT ON COLUMN readings.notes IS 'Additional information of the readings.';
-COMMENT ON COLUMN readings.equipment IS 'Equipment name used for the readings.  e.g. moisture_testers, penetrometers';
-COMMENT ON COLUMN readings.geometry IS 'The location of the monitoring station. Follows EPSG: 4326.';
-COMMENT ON COLUMN readings.soil_ph IS 'The soil ph measured in pH scale is from 0 (most acid) to 14 (most alkaline) and a pH of 7 is neutral.';
-COMMENT ON COLUMN readings.soil_temperature IS 'The soil temperature measured in degrees celcius.';
-COMMENT ON COLUMN readings.estimated_depth_m IS 'The estimated_depth length measured in meters.';
+COMMENT ON TABLE reading IS 'Look up table for monitoring station reading';
+COMMENT ON COLUMN reading.id IS 'The reading. This is the Primary Key.';
+COMMENT ON COLUMN reading.uuid IS 'Global Unique Identifier.';
+COMMENT ON COLUMN reading.last_update IS 'The date that the last update was made (yyyy-mm-dd hh:mm:ss).';
+COMMENT ON COLUMN reading.last_update_by IS 'The name of the person who last updated the table.';
+COMMENT ON COLUMN reading.reading_value IS 'The value of the parameter measured, e.g temperature, pH';
+COMMENT ON COLUMN reading.notes IS 'Additional information of the reading';
+COMMENT ON COLUMN reading.monitoring_station_uuid IS 'Globally Unique Identifier.';
+COMMENT ON COLUMN reading.reading_unit_uuid IS 'Globally Unique Identifier.';
 
 -----------------------------------------------------------------------------------------------------
 -- CONDITIONS

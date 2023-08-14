@@ -1,6 +1,6 @@
 # SmallFarmProjectDub
 
-This is a small farm project by intrns. it focuses on these tables below:
+This is a small farm project by interns. it focuses on the tables below:
 
 1. Buildings
 2. Land Use
